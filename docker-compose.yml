@@ -1,0 +1,68 @@
+version: '2'
+
+services:
+    mydb:
+        container_name: mydb
+        image: mysql
+        #dns: 192.168.1.1
+        ports:
+           - "3306:3306"
+        volumes:
+            - "./.data/db:/var/lib/mysql"
+        environment:
+            MYSQL_ROOT_PASSWORD: "root"
+            MYSQL_DATABASE: "mydb"
+            MYSQL_USER: "root"
+            MYSQL_PASSWORD: "root"
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        links:
+            - mydb
+        ports:
+            - 85:80
+        #restart: always
+
+        #volumes:
+        #    - "./.data/db:/var/lib/mysql"
+        environment:
+            PMA_HOST: mydb
+            PMA_PORT: 3306
+            MYSQL_USERNAME: "root"
+            MYSQL_ROOT_PASSWORD: "root"
+
+    web:
+        image: nginx:latest
+        ports:
+            - "83:80"
+        volumes:
+            - ./symfony:/symfony
+            - ./nginx/symfony.conf:/etc/nginx/conf.d/site.conf
+
+        links:
+            - php
+
+    php:
+        build:
+            context: php7-fpm
+            args:
+                TIMEZONE: "Europe/Paris"
+        volumes:
+            - ./symfony:/symfony
+
+    couchdb:
+        image: apache/couchdb:1.7.1
+        container_name: couch
+        volumes:
+            - ./etc:/usr/local/etc/couchdb/local.d
+            - ./lib:/usr/local/var/lib/couchdb
+        ports:
+            - "5984:5984"
+        environment:
+            #COUCHDB_HTTP_BIND_ADDRESS: "127.0.0.1"
+            COUCHDB_USER: "root"
+            COUCHDB_PASSWORD: "root"
+        #command: -couchdb.uri=http://couchdb:5984/ -couchdb.username=root -couchdb.password=root
+
+
+
